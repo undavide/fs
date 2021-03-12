@@ -2,14 +2,7 @@
 
 A long (long) time ago I wrote an essay on Frequency Separation, even if the main subject was disguised in the more approachable title "Notes on Sharpening". That was early 2009, way before Frequency Separation was cool, then popularized/mainstream, then possibly cool again.
 
-I've thought to revisit the original article to give the subject a new coat of 2021 paint, plus all sorts of new detours. 
-
-Spoiler alert: I'm interested in Frequency Separation (FS from now on) as a tool for a broader set of manipulations not limited to, nor particularly focused on, beauty/skin retouch. 
-
-If the original 2009 synopsis is your cup of tea then welcome to the rabbit hole.
-
-> Sharpening with Gaussian and edge-aware blurring kernels; a new experimental approach on High-Radius Low-Amount contrast enhancement; how to separately target edges and texture in the same high frequency range. Gaussian, Bilateral and Mixed pyramid decompositions.
-
+I've thought to revisit the original article to give the subject a new coat of 2021 paint, plus all sorts of new detours. **Spoiler alert**: I'm interested in Frequency Separation as a tool for a broader set of manipulations not limited to, nor particularly focused on, beauty/skin retouch.
 
 ## 1. Frequencies
 
@@ -25,7 +18,7 @@ In the more familiar realm of images, you can think of high frequencies as descr
 
 ## 2. Basic frequency separation
 
-As opposed to the signal wave example, with images we usually deal with _frequency ranges_. When you filter with Gaussian Blur (Filter > Blur > Gaussian Blur, GB from now on) e.g. radius 10px, you're getting rid of all the high frequencies (i.e. detail) that _live_ in the smaller-than-10px range. Whereas if you High-Pass (Filter > Others > High Pass, HP from now on) with the same radius you're doing the opposite: you're left with everything that lives in the smaller-than-10px range (only the high frequencies are allowed to pass – hence the filter name).
+As opposed to the signal wave example, with images we usually deal with _frequency ranges_. When you filter with Gaussian Blur (Filter > Blur > Gaussian Blur, GB from now on) e.g. radius 10px, you're getting rid of all the high frequencies (i.e. detail) that _belong to_ the smaller-than-10px range. Whereas if you High-Pass (Filter > Others > High Pass, HP from now on) with the same radius you're doing the opposite: you're left with everything that belongs in the smaller-than-10px range (only the high frequencies are allowed to pass – hence the filter name).
 
 ![](img/GBlurHP.jpg)
 
@@ -101,7 +94,7 @@ Let's see how the theory works with 16 bit files and its different Apply Image.
 
 ![](img/formula-16bit.png)
 
-Here we're Adding to the Original the inverted Blurred (hence 1 minus Blurred, this is how you invert pixels), scaling 2 (i.e. divided by 2). This is again the detail layer then set to Linear Light mode: we call this A, and B is the Original. Applying the same blending formula 2A + B - 1 we can substitute A in it and everything again simplifies to the Original. Great!
+Here we're Adding to the Original the inverted Blurred (hence 1 minus Blurred, this is how you invert pixels), scaling 2 (i.e. divided by 2). This is again the detail layer then set to Linear Light mode: we call this A, and B is the Original. Applying the same blending formula 2A + B - 1 we can substitute A in it and everything simplifies to the Original. Great!
 
 So it's not that Linear Light is a magic blend mode, nor that it fits Frequency Separation. The Apply Image settings happen to work with Linear Light in returning the original values.
 
@@ -251,17 +244,17 @@ Before going any further, let me point out that the **High Pass** filter doesn't
 
 ![](img/HighPass.jpg)
 
-On the left you see the Detail layer, center the High Pass with same radius as the Gaussian Blur (much stronger). Right, putting the HP layer half opacity on top of a mid-gray layer (Edit > Fill > 50% Gray). Apparently it's now identical: if you put the HP on top of the Detail, Difference blending mode, the result is full black and both Mean and Std Deviation (from the Histogram palette) are equal to zero. This for a 16bit file, while an 8bit file shows 0.50. In both case, an extreme contrasting curve shows noise, which in the 16bit case might be just rounding errors (not so sure about the 8bit one).
+On the left you see the Detail layer, center the High Pass with same radius as the Gaussian Blur (much stronger). Right, putting the HP layer half opacity on top of a mid-gray layer (Edit > Fill > 50% Gray). Apparently it's now identical: if you put the HP on top of the Detail, Difference blending mode, the result is full black and both Mean and Std Deviation (from the Histogram palette) are equal to zero. This for a 16bit file, while an 8bit file shows 0.50. In both cases, an extreme contrasting curve shows noise, which in the 16bit case might be just rounding errors (not so sure about the 8bit one).
 
-All in all, I'd keep using the Apply Image method, especially when decomposing the image for retouching purposed.
+All in all, I will keep using the Apply Image method, especially when decomposing the image for retouching purposed.
 
-## 5. Contrast Enhancements
+## 5. Single Kernels
 
-In my experience, Photoshop people tend to think about Frequency Separation mainly as a retouching tool. Sure the image decomposition helps targeting the retouching process in ways and with such precision/ease that would be otherwise impossible, but I am personally more interested in contrast enhancements.
+In my experience, Photoshop people tend to think about Frequency Separation mainly as a retouching tool. Sure the image decomposition helps targeting the retouching process in ways and with such precision/ease that would be otherwise impossible, but I am personally also interested in contrast enhancements.
 
 ### 5.1 Gaussian kernel
 
-As soon as you're able to separate frequency ranges into their own layers, they can be successfully used to enhance or dampen those features in the original image. Gaussian Sharpening is a classic example: without entering the details of the three parameters of the UnSharpMask filter here, conceptually it's _just_ a matter of creating a Gaussian separation and _adding_ the frequencies back to the original – basically discarding the Blurred layer and using the Detail one only. Exaggerated demonstration as follows.
+As soon as you're able to separate frequency ranges into their own layers, they can be successfully used to enhance or dampen those features in the original image. Gaussian Sharpening is a classic example: without entering the details of the three parameters of the UnSharpMask filter here, conceptually it's _just_ a matter of creating a Gaussian separation and _adding_ the frequencies back to the original – basically discarding the Blurred layer and using the Detail one only. Exaggerated radius (40px) demonstration as follows.
 
 ![](img/GaussianSharpening.jpg)
 
@@ -302,16 +295,61 @@ _Michel Eugène Chevreul influenced simultaneous contrast boosted_ look.
 
 ![](img/Color.jpg) 
 
-Also note that if you invert the Detail layer you get the opposite effect: dampening that frequency range rather than enhancing them. It's of little use with a _Gaussian kernel_ (a decomposition which is based on a Gaussian Blur filter) because it would just return a blurred version:
+Feel free to mix different amounts of Color and Luminosity for greater control. Also note that if you invert the Detail layer you get the opposite effect: dampening that frequency range rather than enhancing them. It's of little use with a _Gaussian kernel_ (a decomposition which is based on a Gaussian Blur filter) because it would just return a blurred version:
 
 ![](img/Blurred.jpg)
 
 But with other kernels (especially mixed ones) and varying the opacity it can lead to very interesting results.
 
-### 5.2 Difference of Gaussians
+### 5.2 Non-Gaussian kernels
 
-So far we've subtracted a Blurred version from the Original, in order to get the gray-blob that I've called the Detail layer.
-In the case of the Gaussian enhancement, we've added the Detail back to the Original (using your preferred blend mode/opacity).
+There's nothing special in the Gaussian Blur filter when it comes to image decomposition as we've seen it so far. Whatever you use, provided that you subtract the Original with the _"processed"_ version and you put the result on top of the filtered in Linear Light, you're going to get the Original back. You can try silly filters if you want to prove it:
+
+![](img/Crystallize.jpg)
+
+You can even throw in something totally unrelated and it'll work all the same.
+
+![](img/Moss.jpg)
+
+Think about the Apply Image step like noise cancelling headphones: you're somehow factoring out the "interference" (the _altered image_) and find a signal that, combined with it, returns the frequencies you want to hear.  All those weird filters have no use, but to help you get the point.
+
+At this point you should have built the intuition that what the _kind of detail_ that the kernel destroys, is the kind of stuff that migrates in the Detail layer and you'll be able to enhance/retouch in the original image. One well-known kernel used in such decompositions is the **Bilateral Filter**, a.k.a. the Surface Blur. Killing (in theory) everything but edges, you can expect that it's going to enhance Textures and leave Edges more or less alone.
+
+![](img/SurfaceBlur.jpg)
+
+The result is not meant to be pretty here: it illustrates the point, and it's yet another item in your toolbox to be used when the right image comes along. Please remember that these two-layers decompositions can be used for retouching purposes with a Base (blurred) + Detail layer, so it can be interesting, depending on the image, to be able to target fine textures and leave edges alone.
+
+Another quite common kernel used by retouchers is the **Median**:
+
+![](img/Median.jpg)
+
+But even weird kernels can lead to surprisingly interesting results. For instance **Maximum** (dilation filter) that expands the maximum values of a round (or square) region of pixels; resulting in a visually lighter image, we know that the result of the Detail layer application is the opposite: darkened. As follows a 2px radius, with the Detail in Linear Light 50% opacity.
+
+![](img/Maximum.jpg)
+
+Similarly, the **Minimum** (erosion) darkens the intermediate hence it'll lighten the composite:
+
+![](img/Minimum.jpg)
+
+Speaking of Sharpening, you can get fancy with all sort of Blur kernels (e.g. the ones in the Filters' Blur Gallery). In the following example I've created a new Channel with a gradient that it's used to apply a Lens Blur filter nicely faded in around the eyes region only. The resulting Detail layer is able to apply a sharpening effect that fades in a way so natural that no layer mask would ever be able to replicate.
+
+![](img/LensBlur.jpg)
+
+## 6. Multiple Kernels
+
+### 6.1 Polyfiltered Detail layers
+
+Nothing prevents you from using more than one filter (applied on top of the previous one) to build the layer that will be used to extract the Detail. In the following example I've used the Oil Paint filter plus Smart Blur.
+
+![](img/Oil.jpg)
+
+That still makes a perfectly valid candidate for a two-layers frequency separation that can be used for both retouching or contrast enhancement. Possibilities are endless, provided that you're able to invent ways to destroy the kind of detail that you want to migrate to a separate layer.
+
+Leaving for the moment the field of perfect decomposition stacks of one base, filtered layer plus the Apply Image on top, there are ways to build _interesting_ Detail layers for contrast enhancement purposes. Later on we'll learn how to bring them back to decomposition stacks. 
+
+### 6.2 Difference of Gaussians
+
+So far we've subtracted a Blurred version from the Original, in order to get the gray-blob that I've called the Detail layer. In the case of the Gaussian enhancement, we've added the Detail back to the Original (using your preferred blend mode/opacity).
 
 O - GB = D
 Enhanced = O + D
@@ -344,62 +382,125 @@ It's a tecnique known as **Difference of Gaussians**, or DoG.
 
 At the moment we're not yet equipped to use this Detail layer for retouching purposes as well, but I'll get to that in a short while. For the moment, feel free to experiment with different DoG values.
 
-### 5.3 Non-Gaussian kernels
+### 6.3 Edges layer
 
-There's nothing special in the Gaussian Blur filter when it comes to image decomposition as we've seen it so far. Whatever you use, provided that you subtract the Original with the _"processed"_ version and you put the result on top of the filtered in Linear Light, you're going to get the Original back. You can try silly filters if you want to prove it:
+In the DoG example above we've combined two identical (Gaussian) kernels with different parameters. We may now try to combine two different kernels – it's entirely within the realm of possibilities.
 
-![](img/Crystallize.jpg)
+We've already met the candidates. Surface Blur (SB) is able to discern the image content and blur "surfaces" and not "edges"; Gaussian Blur (GB), instead, wipes out everything that is within its frequency range. With a bold leap of faith you can consider the original image (O) to be _made of_ "edges" (E) and "texture" (T): wildly unorthodox math ensues.
 
-You can even try with something totally unrelated:
+O = T + E  
+SB = O - T  
+GB = O - (T + E)  
+SB - GB = O - T - (O - (T + E)) =  
+O - T - O + T + E = E
 
-![](img/Moss.jpg)
+In other words: if GB subtracts both texture plus edges, and SF subtracts texture only, then if you subtract SB from GB then you get a Detail layer that contains Edges only without texture. An image might help.
 
-You can think about this Apply Image step like noise cancelling headphones: you're somehow factoring out the "interference" (the _altered image_) and find a signal that, combined with that, returns the sounds you want to hear.  All those weird filters have no use, but to help you get the point :-)
+![](img/Edges.jpg)
 
-At this point you should have built the intuition that what the _kind of detail_ that the kernel destroys, is the kind of stuff that migrates in the Detail layer and you'll be able to enhance in the original image. One well-known kernel used in such decompositions is the **Bilateral Filter**, a.k.a. the Surface Blur. Killing (in theory) everything but edges, you can expect that it's going to enhance Textures.
+This Detail layer has been built with Surface Blur (Radius 12px, Threshold 15px) and Gaussian Blur (radius 10px). The intuition is always the same: how are the two operands different? That difference is what will be enhanced. 
 
-![](img/SurfaceBlur.jpg)
+![](img/Edges3.jpg)
 
-The result is not meant to be pretty here: it illustrate the point, and it's yet another item in your toolbox. Please remember that these simple decompositions can be used for retouching purposes with a Base (blurred) + Detail layer, so it can be interesting, depending on the image, to be able to target fine textures and leave edges alone.
+Here both textures are more or less blurred the same way: they aren't different hence will stay the same. Edges (the broad strokes that draw the main traits such as eyes, nose, mouth and hair) are instead dramatically different, hence they'll get enhanced.
 
-Another quite common kernel used by retouchers is the **Median**:
+![](img/Edges2.jpg)
 
-![](img/Median.jpg)
+## 7. Image decomposition
 
-But even weird kernels can lead to surprisingly interesting results. For instance **Maximum** (dilation filter) that expands the maximum values of a round (or square) region of pixels; resulting in a visually lighter image, we know that the result of the Detail layer application is the opposite: darkened. As follows a 2px radius, with the Detail in Linear Light 50% opacity.
+So far we have either performed frequency separations to rebuild a clone of the original image split in two layers (a filtered one, e.g. blurred, plus a difference e.g. the detail in Linear Light blend mode) or we've create a variety of independent detail layers for contrast enhancing purposes. It's time to join the two worlds.
 
-![](img/Maximum.jpg)
+### 7.1 Gaussian pyramid
 
-Similarly, the **Minimum** darkens the intermediate hence it'll lighten the composite:
+Let's start with the familiar Gaussian kernel. If you recall, with the DoG we've targeted very specific frequency ranges, eg. from 40px to 20px. It's possible to build a _pyramid_ (i.e. a multi-frequency decomposition) splitting the image into more than two layers, say for instance four. These four layers will describe and represent the original image as a sum of four frequency ranges: from "infinity" to 40; from 40 to 15; from 15 to 5; from 5 to zero.
 
-![](img/Minimum.jpg)
+The math is quite straightforward. Let's call O the Original picture as usual, GB(n) the GB ﬁlter applied with radius n. We need four layers:
 
+GB(5)
+GB(15)  
+GB(40) 
+O  
 
+Let's define differences Dn as follows:
 
+D1 = O - GB(5)  
+D2 = GB(5) – GB(15)  
+D3 = GB(15) - GB(40)
 
+So the image can be decomposed into:
 
+O = GB(40) + D1 + D2 + D3
 
+In fact, substituting all the elements we get:
 
+O = GB(40) + O - GB(5) + GB(5) - GB(15) + GB(15) - GB(40) = O
 
+Everything simplifies and we're left with the same original image. Let’s switch to Photoshop and try to build this pyramid: first thing, we need the original plus three blurred layers.
 
+![](img/GaussianPyramid.jpg)
 
+Second, we need the GB(40) and the D1, D2, D3. These are just Difference of Gaussians, the same DoG we've already encountered. 
 
+![](img/GaussianPyramid2.jpg)
 
+When you have all the ingredient, you can add them together via Linear Light blending.
 
+![](img/GaussianPyramid3.jpg)
 
+The result is a pixel perfect copy of the original with all the three detail ranges exposed: (40,15)px, (15,5)px, and (5,0)px. 
 
+You can now either exploit this frequency separation for retouching purposes, or add each Detail layer back to the original (with varying blending mode and/or opacity) for a frequency range targeted contrast boost.
 
-## Links
-https://fstoppers.com/post-production/ultimate-guide-frequency-separation-technique-8699
+![](img/GaussianPyramid4.jpg)
 
-Source Image:
-https://www.si.edu/object/angel:saam_1929.6.112?page=5&edan_q=painting&edan_fq%5Btopic%5D=topic:%22Figure%20female%22&edan_fq%5Bobject_type%5D=object_type:%22Paintings%22&edan_fq%5Bmedia_usage%5D=media_usage:%22CC0%22&destination=/search/collection-images&searchResults=1&id=saam_1929.6.112
+Keep in mind that:
 
-[Chris Cox](https://web.archive.org/web/20181204083457if_/https://forums.adobe.com/thread/792212)
+- If you need to decrease the contrast of a particular frequency range, you can just invert the Detail layer.
+- The order of the Detail layers in the stack doesn't really matter – you can freely mix them.
+- There's no limit to the amount of Detail layers you want to create.
+- You can always clip a Curves adjustment if you want to perform some peculiar edit to a Detail layer.
 
-[Blend modes](https://photoblogstop.com/photoshop/photoshop-blend-modes-explained)
-[chinese](http://www.murphychen.com/Talks/blending_modes/final_groups.html)
+### 7.2 Mixed pyramids
 
-[Wiki Blend](https://en.wikipedia.org/wiki/Blend_modes#Soft_Light)
+To properly conclude, there's still one technique that needs to be revisited and incorporated into multi-layer frequency decompositions. If you remember, not long ago we've mixed Gaussian and Surface Blur to obtain an "Edges" Detail layer. It may surprise you (or it may not) to know that you're not at all forced to use the same kernel in a decomposition: you're free to use any kernel that make sense. Let's try to build a GB/SB pyramid!
 
-[Pegtop blend mode](http://www.pegtop.net/delphi/articles/blendmodes/hardlight.htm)
+We need three layers:
+
+SB(12,15)  
+GB(10)   
+O  
+
+![](img/EdgesPyramid.jpg)
+
+Let's define differences Dn as follows:
+
+D1 = O - SB(12,15)  
+D2 = SB(12,15) – GB(10)  
+
+So the image can be decomposed into:
+
+O = GB(10) + D1 + D2
+
+In fact, substituting all the elements we get:
+
+O = GB(10) + O - SB(12,15) + SB(12,15) – GB(10) = O
+
+![](img/EdgesPyramid2.jpg) 
+
+The image can be recomposed: and the Detail layers used for retouching purposed or contrast enhancement like in the previous example.
+
+![](img/EdgesPyramid3.jpg) 
+
+The Detail layers can be used for either retouching purposed or contrast enhancement: at this point it's up to you to decide which kernels to mix, and for which goal. Always remember to look for filters that affects the feature you're interested into – imagination can fly high!
+
+![](img/ORIG.jpg) 
+
+## References
+
+- Abbott Handerson Thayer, a portrait of his daughter from the [Smithsonian Institute collection](https://www.si.edu/object/angel%253Asaam_1929.6.112), 1887.
+- [The Ultimate Guide To The Frequency Separation Technique](https://fstoppers.com/post-production/ultimate-guide-frequency-separation-technique-8699) by Julia Kuzmenko McKim is a nice introductory guide to simple 2-layers decompositions.
+- Former Adobe's Imaging Senior Engineer [Chris Cox](https://web.archive.org/web/20181204083457if_/https://forums.adobe.com/thread/792212) about the decision to use 15bit + 1.
+- Blend modes info are found everywhere but with various degree of precision. I've used  
+[Wikipedia](https://en.wikipedia.org/wiki/Blend_modes) of course, [PhotoBlogStop](https://photoblogstop.com/photoshop/photoshop-blend-modes-explained), but the most interesting have been [Murphy Chen](http://www.murphychen.com/Talks/talks.html) (Chinese language) and [Pegtop](http://www.pegtop.net/delphi/articles/blendmodes/hardlight.htm)
+- If you're curious, my 2009 original article can still be found [here](https://www.knowhowtransfer.com/notes-on-sharpening/)
+- All illustrations are mine. Blend mode graphs are plotted with p5.js, spreadsheets have been made with Apple's Number.
