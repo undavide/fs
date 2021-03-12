@@ -25,7 +25,7 @@ In the more familiar realm of images, you can think of high frequencies as descr
 
 ## 2. Basic frequency separation
 
-As opposed to the signal wave example, with images we usually deal with _frequency ranges_. When you filter with Gaussian Blur (Filter > Blur > Gaussian Blur, GB from now on) e.g. radius 10px, you're getting rid of all the high frequencies (i.e. detail) that _belong to_ the smaller-than-10px range. Whereas if you High-Pass (Filter > Others > High Pass, HP from now on) with the same radius you're doing the opposite: you're left with everything that belongs in the smaller-than-10px range (only the high frequencies are allowed to pass – hence the filter name).
+As opposed to the signal wave example, with images we usually deal with _frequency ranges_. When you filter with Gaussian Blur (Filter > Blur > Gaussian Blur, GB from now on) e.g. radius 10px, you're getting rid of all the high frequencies (i.e. detail) that _belong to_ the smaller-than-10px range. Whereas if you High-Pass (Filter > Others > High Pass, HP from now on) with the same radius you're doing the opposite: you're left with everything that belongs to the smaller-than-10px range (only the high frequencies are allowed to pass – hence the filter name).
 
 ![](img/GBlurHP.jpg)
 
@@ -53,24 +53,26 @@ That is to say: the original layer, and the same built with a Low + High frequen
 
 Blending modes are arbitrary ways to mix two layers – say a Base (B) below and an Active (A) above – according to a formula. 
 
-Some blends are easier if applied on normalized values, i.e. in the range (0,1). Multiply, for instance, is a well known darkening blending mode, but not if the multiplication is simply calculated with pixel values in the (0,255) range. Let's pretend that we have the following values – I take in consideration one channel only for simplicity's sake:
+Some blends are _easier to understand_ if applied on normalized values, i.e. in the range (0,1). As an example, Multiply is a well known darkening blending mode, but not if the multiplication is calculated with pixel values in the (0,255) range. Let's pretend that we have the following values[^onechannel].
+
+[^onechannel]: I take in consideration one channel only for simplicity's sake.
 
 A = 51, B = 153;  
 A * B = 51 * 153 = 7.803 
 
-A brightened result, that must be normalized with a 255 factor to be meaningful (and appear as a darkened value):
+A brightened result, that must be normalized with a 255 factor to be meaningful and appear darkened:
 
 (51 * 153) / 255 = 30.6 
 
-If you normalize them first it's the same
+If you normalize them first it's just the same
 
 A = 51/255 = 0.2; B = 153/255 = 0.6;   
 A * B = 0.2 * 0.6 = 0.12  
 0.12 * 255 = 30.6
 
-When the result is out of scale it's just clipped to 0 or 255, unless further blends are to be calculated.
+When the result is out of scale it's clipped to 0 or 255, unless further blends are to be calculated.
 
-Various online sources state that Linear Light is a mix of Linear Dodge (Add) and Linear Burn. Is it really? (Spoiler alert: no) Let's test it. With **Linear Dodge (Add)**, the formula for the blend is **(A + B)**. Being a simple addition, you can use both the normalized (0,1) or the (0,255) range, it makes no difference. Using the same values of A, B:  
+Various online sources state that Linear Light is a mix of Linear Dodge (Add) and Linear Burn. Is it really? (Spoiler alert: nope) Let's test it. With **Linear Dodge (Add)**, the formula for the blend is **(A + B)**. Being a simple addition, you can use both the normalized (0,1) or the (0,255) range: it makes no difference. Using the same values for A, B from the previous example:  
 
 A + B = 0.2 + 0.6 = 0.8  
 0.8 * 255 = 204  
@@ -81,7 +83,7 @@ The **Linear Burn** formula is **A + B - 1**: an addition follwed by an inversio
 A + B - 1 = 0.2 + 0.6 - 1 = -0.2; (clipped to 0)  
 A + B - 1 = 51 + 153 - 255 = -51 (clipped to 0)
 
-Let me stress that "inversion" here means "subtraction with white", which is 1 in a normalized range, 255 in 8bit documents.
+Let me stress that "inversion" here means "subtraction with white", which is 1 in the normalized range, and _should be_ 255 for 8bit documents (more on that later).
 
 The **Linear Light** formula is instead **2A + B - 1**, so twice the impact for the top layer. If you draw a gradient from Black to White on a new document, duplicate the layer and change its blend mode, these are the result for Linear Dodge/Burn/Light:
 
@@ -89,13 +91,13 @@ The **Linear Light** formula is instead **2A + B - 1**, so twice the impact for 
 
 So I'm afraid no, LinearLight **is not** "a combination of Linear Dodge and Linear Burn" because the slope of the curve is different. It's not a shift of either formulas (resulting in A + B - 0.5), which would have in fact pivoted the line around (0.5, 0.5). With Linear Light the slope is steeper – and in fact the formula is 2A + B -1.
 
-Now that we've got this, let's try to understand why Linear Light works with the kind of Apply Image that we've used. There's nothing inherently "frequency separation-y" with Linear Light, it just happens to combine perfectly with the sort of Image Calculations we've performed. We'll start with the 8bit version, and move to the 16 bit next.
+Now that we've got this, let's try to understand why Linear Light works with the kind of Apply Image that we've used. There's nothing inherently "frequency separation-y" with Linear Light, it just happens to combine perfectly with the sort of Image Calculations we've performed. We'll start with the 8bit version, and move to the 16bit next.
 
 ![](img/formula-8bit.png)
 
-The Apply Image step was the Original minus the Blurred (hence the Subtract mode) with Scale 2 (meaning divided by 2) and Offset (i.e. plus) 128 that is normalized to 0.5. All this is equal to the grayish detail layer, which is then set to Linear Light mode: being on top, let's call it A. The layer below (B) is the Original, and the blend formula for Linear Light is 2A + B - 1. Let's substitute A with (Original - Blur)/2 + 0.5 in the formula and you see that everything simplifies to Original, QED.
+The Apply Image step was the Original minus the Blurred (hence the Subtract mode) with Scale 2 (meaning divided by 2) and Offset (i.e. plus) 128 that is normalized to 0.5. All this is equal to the grayish detail layer, which is then set to Linear Light blending mode: being on top, let's call it A. The layer below (B) is the Original, and the blend formula for Linear Light is 2A + B - 1. Let's substitute A with (Original - Blur)/2 + 0.5 in the formula and you see that everything simplifies to Original, QED.
 
-In other words, we've demonstrated why this particular Subtraction (with Scale 2, Offset 128) perfectly combines with the Linear Light blending mode (that is not a combination of Linear Dodge/Burn but something else) to return an identical copy of the original. Cool!
+In other words, we've demonstrated why this particular Subtraction (with Scale 2, Offset 128) perfectly combines with the Linear Light blending mode to return an identical copy of the original. Cool!
 
 Let's see how the theory works with 16 bit files and its different Apply Image.
 
@@ -105,11 +107,11 @@ Here we're Adding to the Original the inverted Blurred (hence 1 minus Blurred, t
 
 So it's not that Linear Light is a magic blend mode, nor that it fits Frequency Separation. The Apply Image settings happen to work with Linear Light in returning the original values.
 
-Then why two different methods with 8bit/16bit documents? You're ready for some bit depth Maths.
+Then... why two different methods with 8bit/16bit documents? You're ready for some bit depth Maths.
 
 ## 4. 8bit vs. 16bit Maths
 
-For 8bit images, pixel values are in 2^8 = 256 range, i.e. **(0,255)**. Black is zero, White is two-hundred-fifty-five. You might be tempted to assume that 16bit works the same, but it turns out that Adobe Photoshop's **16bit is in fact 15bit + 1**, meaning 2^15 + 1 = 32768 + 1 = 32769, expressed in the range **(0,32768)**. Why? The accepted answer is that _"this gives a midpoint to the range (very useful for blending), and allows for faster math because we can use bit shifts instead of divides"_ ([source](https://web.archive.org/web/20181204083457if_/https://forums.adobe.com/thread/792212)).
+For 8bit images, pixel values are in 2^8 = 256 range, i.e. **(0,255)**. Black is zero, White is two-hundred-fifty-five. You might be tempted to assume that 16bit works the same, but it turns out that Adobe Photoshop's 16bit is in fact **15bit + 1**, meaning 2^15 + 1 = 32768 + 1 = 32769, expressed in the range **(0,32768)**. Why? The accepted answer is that _"this gives a midpoint to the range (very useful for blending), and allows for faster math because we can use bit shifts instead of divides"_ ([source](https://web.archive.org/web/20181204083457if_/https://forums.adobe.com/thread/792212)).
 
 ### 4.1 8bit special inversion
 
@@ -123,11 +125,11 @@ LL = 2A + B - 1 = 2*102 + 102 - 255 = **51**
 
 Alas, ["computer says no"](https://youtu.be/0n_Ty_72Qds), and PS calculates **50**. There are no divisions here, so I wouldn't expect rounding errors of any sort, it's quite straightforward. I've tested it with a bunch of different pixel values for the top and bottom layers, and the result is _always off by 1_. 
 
-Out of curiosity I've tested _Affinity Photo_'s behaviour and it works as I'd expect:
+Out of curiosity I've tested **Affinity Photo** and it works as I'd expect:
 
 ![](img/AP_LL1.jpg)
 
-The only explanation is that Photoshop **subtracts 256 instead of 255**. This is in fact the case, and the explanation is that otherwise there would be no neutral color in Linear Light with 8bit documents. 
+The only explanation is that Photoshop **subtracts 256 instead of 255**. This is in fact the case, and the [reason](https://feedback.photoshop.com/conversations/photoshop/linear-light-8bit-math-off-by-1/6017e8a5b03192438cda1120) is that otherwise there would be no neutral color in Linear Light with 8bit documents. 
 
 LL = 2A + B - 1
 
@@ -152,7 +154,7 @@ For A = 128, deltaA = 2*128 - 256 = 0
 
 **This is true for 8bit documents only**. 
 
-Given the particular nature of 15bit + 1 of nominally 16bit documents, there are 32769 values in the (0, 32768) range, there's no need to _fake_ the white subtraction. The White used is in fact the proper 32768.
+For 16bit documents, given their particular nature of 15bit + 1, there are 32769 values in the (0, 32768) range, hence no need to tweak the white subtraction. In fact, the used value is the proper 32768.
 
 ![](img/PS_LL2.jpg)
 
@@ -206,7 +208,7 @@ So we're off one point in both dark and light side. I've noted all the values al
 
 ![](img/8bitSubtraction.png)
 
-Why two different tables? Because Photoshop **rounds values to the integer in an inconsistent way** – or at least in a way for which I haven't been able to find the rule. The table above shows the _"theoretical values"_ (which would lead to zero errors everywhere), while the bottom one is filled with the actual readings. I say PS rounds _inconsistently_ because for reasons unknown the first five values in the Subtraction row are rounded down (130.5 -> 130, the floor), while the last five values are rounded up (125.5 -> 126, the ceiling). Go figure.
+Why two different tables? Because Photoshop **rounds values to the integer in an inconsistent way** – or at least in a way for which I haven't been able to find the rule. The table above shows the _"theoretical values"_ (floats, which would lead to zero errors everywhere), while the bottom one is filled with the actual readings. I say PS rounds _inconsistently_ because for reasons unknown to me the first five values in the Subtraction row are rounded down (130.5 -> 130, the floor), while the last five values are rounded up (125.5 -> 126, the ceiling). Go figure.
 
 All in all, for 10 pixels we've got 4 off by 1 (in absolute value), so a **total error of 4**.
 
@@ -216,23 +218,23 @@ Let's try with the same 8bit document, but with the  16bit Calculations instead 
 
 The results are much worse. On the one hand there are the same weird behaviour mixing ceiling and floor rounding. On the other hand, the theoretical error is more than twice the real error for the Subtraction calculation, and 4 times that in the actual document!
 
-Even when rounding is not needed (e.g. for pixels 3, 4, 7, 8, 10) the theoretical value is always off by 1. My understanding is that the special white value (256 instead of 255) used in the LL blend is compensated with the 128 offset in the Subtraction method only. Why some values are even worse in the actual readings (same pixels 3, 4, 7, 8, 10) I have no explanation for. But the experimental result is that Addition in an 8bit file results in a greater error (4x) the one of Subtraction.
+Even when rounding is not needed (e.g. for pixels 3, 4, 7, 8, 10) the theoretical value is always off by 1. My understanding is that the special white value (256 instead of 255) used in the LL blend is compensated with the 128 offset in the Subtraction method only. Why some values are even worse in the actual readings (same pixels 3, 4, 7, 8, 10) I have no explanation for. But the experimental result is that Addition in an 8bit file results in a greater error, 4 times the Subtraction's.
 
 ### 4.3 Image Calculations: 16bit 
 
-I've set up a similar document, but 16bit:
+I've set up a similar document, but 16bit (with the sampler set to read 16bit values):
 
 ![](img/16bitPhotoshop.png)
 
-Let me show you the spreadsheets for the proper 16bit calculation, **Addition of the inverse, Scaled 2**
+Let me show you the spreadsheets for the recommended 16bit calculation, **Addition of the inverse, Scaled 2**
 
 ![](img/16bitAddition.png)
 
-Here the theoretical error is always zero, whereas the actual document shows a minimal error. Different story if you try the recommended Apply Image settings for 8bit, the **Subtraction with Scale 2 and 128 Offset**:
+Here the theoretical error is always zero, whereas the actual document shows minimal deviation. Different story if you try the recommended Apply Image settings for 8bit, the **Subtraction with Scale 2 and 128 Offset**:
 
 ![](img/16bitSubtraction.png)
 
-Here the error is much greater, and due to the fact that 128 translates (in 16bit) to 16448 – try adding a 128 solid color layer and measure it in Photoshop with the color sampler set to 16bit. In this case the resulting bigger error is due to the mismatch between the theoretical middle-gray offset for 16bit documents (16384) and the one used in Apply Image (16448) where you have to enter an 8bit number even if the document is 16bit.
+Here the error is much greater: I'd say due to the fact that 128 translates (in 16bit) to 16448. Try adding a 128 solid color layer and measure it in Photoshop with the color sampler set to 16bit, this is the value you're going to get. My interpretation of the experimental results is that the difference is due to the mismatch between the theoretical middle-gray offset for 16bit documents (16384) and the one used in Apply Image (16448) – where you have to enter an 8bit number even if the document is 16bit.
 
 Mind you: 1280 seems to be a much bigger error than the 16 points of the 8bit Addition case, but it's actually lower: it's a 4% error, compared to 6% of the 8bit.
 
@@ -251,9 +253,9 @@ Before going any further, let me point out that the **High Pass** filter doesn't
 
 ![](img/HighPass.jpg)
 
-On the left you see the Detail layer, center the High Pass with same radius as the Gaussian Blur (much stronger). Right, putting the HP layer half opacity on top of a mid-gray layer (Edit > Fill > 50% Gray). Apparently it's now identical: if you put the HP on top of the Detail, Difference blending mode, the result is full black and both Mean and Std Deviation (from the Histogram palette) are equal to zero. This for a 16bit file, while an 8bit file shows 0.50. In both cases, an extreme contrasting curve shows noise, which in the 16bit case might be just rounding errors (not so sure about the 8bit one).
+On the left you see the Detail layer, center the High Pass with same radius as the Gaussian Blur (much stronger effect). Right, putting the HP layer half opacity on top of a mid-gray layer (Edit > Fill > 50% Gray). Apparently it's now identical: if you put the HP on top of the Detail, Difference blending mode, the result is full black and both Mean and Std Deviation (from the Histogram palette) are equal to zero. This for a 16bit file, while an 8bit file shows 0.50. In both cases, an extreme contrasting curve shows noise, which in the 16bit case might be just rounding errors (not so sure about the 8bit one).
 
-All in all, I will keep using the Apply Image method, especially when decomposing the image for retouching purposed.
+All in all, I will keep using the Apply Image method, especially when decomposing the image for retouching purposes.
 
 ## 5. Single Kernels
 
@@ -281,9 +283,9 @@ Several things to point out ASAP.
 
 ![](img/Luminosity.jpg) 
 
-As a side note, this is a little known technique that lets you mix blending modes in a very fast and cheap (in terms of filesize) way.
+This is a little known technique that lets you mix blending modes in a very fast and cheap (in terms of filesize) way.
 
-Alternatively, you can slightly tweak the procedure. If after the Gaussian Blur you Edit > Fade Gaussian Blur... and set it to "Luminosity" you end up with a weird looking blurred thing, as shown in the following image.
+Alternatively, you can slightly tweak the procedure. If after the Gaussian Blur you Edit > Fade Gaussian Blur... and set it to "Luminosity" you end up with a weird looking blurred thing.
 
 ![](img/LuminosityBlur.jpg)
 
@@ -297,7 +299,7 @@ Where D is Detail, O is Original, and GB stands for Gaussian Blur (the blurred l
 
 O - GB(Lum) = D(Lum)
 
-Finally, nothing prevents you use the regular decomposition and retain the color only, in order to emphasize a more impressionistic effect – some sort of 
+Finally, nothing prevents you to use the regular decomposition and retain the color only, in order to emphasize a more impressionistic effect – some sort of 
 _Michel Eugène Chevreul influenced simultaneous contrast boosted_ look.
 
 ![](img/Color.jpg) 
@@ -310,7 +312,9 @@ But with other kernels (especially mixed ones) and varying the opacity it can le
 
 ### 5.2 Non-Gaussian kernels
 
-There's nothing special in the Gaussian Blur filter when it comes to image decomposition as we've seen it so far. Whatever you use, provided that you subtract the Original with the _"processed"_ version and you put the result on top of the filtered in Linear Light, you're going to get the Original back. You can try silly filters if you want to prove it:
+There's nothing special in the Gaussian Blur filter when it comes to image decomposition as we've seen it so far. Provided that you subtract[^subtract] the Original with the _"processed"_ version and you put the result on top of the filtered in Linear Light, you're going to get the Original back. You can try silly filters if you want:
+
+[^subtract]: I keep using "subtract" as a verb, but you should use the more appropriate Apply Image to the document's bit depth.
 
 ![](img/Crystallize.jpg)
 
@@ -324,9 +328,9 @@ At this point you should have built the intuition that what the _kind of detail_
 
 ![](img/SurfaceBlur.jpg)
 
-The result is not meant to be pretty here: it illustrates the point, and it's yet another item in your toolbox to be used when the right image comes along. Please remember that these two-layers decompositions can be used for retouching purposes with a Base (blurred) + Detail layer, so it can be interesting, depending on the image, to be able to target fine textures and leave edges alone.
+The result is not meant to be pretty here: it illustrates the point, and it's yet another item in your toolbox to grab when the right image comes along. Please remember that these two-layers decompositions can be used for retouching purposes with a Base (blurred) + Detail layer, so it can be interesting, depending on the image, to be able to target fine textures and leave edges alone.
 
-Another quite common kernel used by retouchers is the **Median**:
+Another quite common kernel is the **Median**, mostly because it suits retouchers when they need to address the Detail layer:
 
 ![](img/Median.jpg)
 
@@ -346,7 +350,7 @@ Speaking of Sharpening, you can get fancy with all sort of Blur kernels (e.g. th
 
 ### 6.1 Polyfiltered Detail layers
 
-Nothing prevents you from using more than one filter (applied on top of the previous one) to build the layer that will be used to extract the Detail. In the following example I've used the Oil Paint filter plus Smart Blur.
+Nothing prevents you from using more than one filter (applied on top of the previous one) to build the layer that will be used to extract the Detail. In the following example I've used the Oil Paint filter plus a Smart Blur round.
 
 ![](img/Oil.jpg)
 
@@ -358,7 +362,7 @@ Leaving for the moment the field of perfect decomposition stacks of one base, fi
 
 So far we've subtracted a Blurred version from the Original, in order to get the gray-blob that I've called the Detail layer. In the case of the Gaussian enhancement, we've added the Detail back to the Original (using your preferred blend mode/opacity).
 
-O - GB = D
+O - GB = D  
 Enhanced = O + D
 
 The enhancement targets the frequency range from whatever is the Gaussian Blur radius used (in my case 40px) down: so the (0,40)px range[^down]. If you think about GB as a filter that wipes out the higher-than-the-radius frequencies:
@@ -387,13 +391,13 @@ It's a tecnique known as **Difference of Gaussians**, or DoG.
 
 ![](img/DoG2.jpg)
 
-At the moment we're not yet equipped to use this Detail layer for retouching purposes as well, but I'll get to that in a short while. For the moment, feel free to experiment with different DoG values.
+At the moment we're not yet equipped to use this Detail layer for retouching purposes as well, but I'll get to that in a short while. Meanwhile, feel free to experiment with different DoG values.
 
 ### 6.3 Edges layer
 
 In the DoG example above we've combined two identical (Gaussian) kernels with different parameters. We may now try to combine two different kernels – it's entirely within the realm of possibilities.
 
-We've already met the candidates. Surface Blur (SB) is able to discern the image content and blur "surfaces" and not "edges"; Gaussian Blur (GB), instead, wipes out everything that is within its frequency range. With a bold leap of faith you can consider the original image (O) to be _made of_ "edges" (E) and "texture" (T): wildly unorthodox math ensues.
+We've already met the candidates. Surface Blur (SB) is able to discern the image content, blurring "surfaces" and not "edges"; Gaussian Blur (GB), instead, wipes out everything that is within its frequency range. With a bold leap of faith you can consider the original image (O) to be _made of_ "edges" (E) and "texture" (T): wildly unorthodox math ensues.
 
 O = T + E  
 SB = O - T  
@@ -401,7 +405,7 @@ GB = O - (T + E)
 SB - GB = O - T - (O - (T + E)) =  
 O - T - O + T + E = E
 
-In other words: if GB subtracts both texture plus edges, and SF subtracts texture only, then if you subtract SB from GB then you get a Detail layer that contains Edges only without texture. An image might help.
+In other words: if GB subtracts both texture plus edges, and SF subtracts texture only, then if you subtract SB from GB you get a Detail layer that contains Edges only without texture. An image might help demonstrating the concept.
 
 ![](img/Edges.jpg)
 
@@ -409,7 +413,7 @@ This Detail layer has been built with Surface Blur (Radius 12px, Threshold 15px)
 
 ![](img/Edges3.jpg)
 
-Here both textures are more or less blurred the same way: they aren't different hence will stay the same. Edges (the broad strokes that draw the main traits such as eyes, nose, mouth and hair) are instead dramatically different, hence they'll get enhanced.
+Here both textures are more or less blurred the same way: they aren't different hence they'll stay the same. Edges (the broad strokes that draw the main traits such as eyes, nose, mouth and hair) are instead dramatically different, hence they'll get enhanced.
 
 ![](img/Edges2.jpg)
 
@@ -419,14 +423,14 @@ So far we have either performed frequency separations to rebuild a clone of the 
 
 ### 7.1 Gaussian pyramid
 
-Let's start with the familiar Gaussian kernel. If you recall, with the DoG we've targeted very specific frequency ranges, eg. from 40px to 20px. It's possible to build a _pyramid_ (i.e. a multi-frequency decomposition) splitting the image into more than two layers, say for instance four. These four layers will describe and represent the original image as a sum of four frequency ranges: from "infinity" to 40; from 40 to 15; from 15 to 5; from 5 to zero.
+Let's start with the familiar Gaussian kernel. If you recall, with the DoG we've targeted very specific frequency ranges, eg. from 40px to 20px. It's possible to build a _pyramid_ (i.e. a multi-frequency decomposition) splitting the image into more than two layers, e.g. four. These four layers will describe and represent the original image as a sum of four frequency ranges: from "infinity" to 40px; from 40px to 15px; from 15px to 5px; from 5px to zero.
 
 The math is quite straightforward. Let's call O the Original picture as usual, GB(n) the GB ﬁlter applied with radius n. We need four layers:
 
-GB(5)
-GB(15)  
-GB(40) 
 O  
+GB(5)  
+GB(15)  
+GB(40)   
 
 Let's define differences Dn as follows:
 
@@ -442,34 +446,34 @@ In fact, substituting all the elements we get:
 
 O = GB(40) + O - GB(5) + GB(5) - GB(15) + GB(15) - GB(40) = O
 
-Everything simplifies and we're left with the same original image. Let’s switch to Photoshop and try to build this pyramid: first thing, we need the original plus three blurred layers.
+Everything simplifies and we're left with the same original image. Let’s switch to Photoshop and try to build this pyramid: first thing, we need the original plus three progressively more blurred layers.
 
 ![](img/GaussianPyramid.jpg)
 
-Second, we need the GB(40) and the D1, D2, D3. These are just Difference of Gaussians, the same DoG we've already encountered. 
+Second, we need the GB(40) and D1, D2, D3. These are just Difference of Gaussians, the same DoG we've already encountered. 
 
 ![](img/GaussianPyramid2.jpg)
 
-When you have all the ingredient, you can add them together via Linear Light blending.
+When you have all the ingredients, you can add them together via Linear Light blending.
 
 ![](img/GaussianPyramid3.jpg)
 
 The result is a pixel perfect copy of the original with all the three detail ranges exposed: (40,15)px, (15,5)px, and (5,0)px. 
 
-You can now either exploit this frequency separation for retouching purposes, or add each Detail layer back to the original (with varying blending mode and/or opacity) for a frequency range targeted contrast boost.
+You can now either exploit this frequency separation for retouching purposes, or add each Detail layer back to the original (with various blending modes and/or opacities) for a frequency range targeted contrast boost.
 
 ![](img/GaussianPyramid4.jpg)
 
 Keep in mind that:
 
-- If you need to decrease the contrast of a particular frequency range, you can just invert the Detail layer.
-- The order of the Detail layers in the stack doesn't really matter – you can freely mix them.
+- If instead of boost, you need to decrease the impact of a particular frequency range, do invert the Detail layer.
+- The order of the Detail layers in the stack doesn't really matter, you can freely mix them.
 - There's no limit to the amount of Detail layers you want to create.
 - You can always clip a Curves adjustment if you want to perform some peculiar edit to a Detail layer.
 
 ### 7.2 Mixed pyramids
 
-To properly conclude, there's still one technique that needs to be revisited and incorporated into multi-layer frequency decompositions. If you remember, not long ago we've mixed Gaussian and Surface Blur to obtain an "Edges" Detail layer. It may surprise you (or it may not) to know that you're not at all forced to use the same kernel in a decomposition: you're free to use any kernel that make sense. Let's try to build a GB/SB pyramid!
+To properly conclude, there's still one technique that needs to be revisited and incorporated into multi-layer frequency decompositions. If you remember, not long ago we've mixed Gaussian and Surface Blur to obtain an "Edges" Detail layer. It may surprise you (or it may not, at this point) to know that you're not at all forced to use the same kernel in a decomposition: you're free to use any kernel that make sense. Let's try to build a GB/SB pyramid!
 
 We need three layers:
 
@@ -494,7 +498,7 @@ O = GB(10) + O - SB(12,15) + SB(12,15) – GB(10) = O
 
 ![](img/EdgesPyramid2.jpg) 
 
-The image can be recomposed: and the Detail layers used for retouching purposed or contrast enhancement like in the previous example.
+The image can be then recomposed as usual.
 
 ![](img/EdgesPyramid3.jpg) 
 
@@ -524,8 +528,8 @@ At this point it's up to you to decide which kernels to mix, and for which goal.
 - Abbott Handerson Thayer, a portrait of his daughter from the [Smithsonian Institute collection](https://www.si.edu/object/angel%253Asaam_1929.6.112), 1887.
 - [The Ultimate Guide To The Frequency Separation Technique](https://fstoppers.com/post-production/ultimate-guide-frequency-separation-technique-8699) by Julia Kuzmenko McKim is a nice introductory guide to simple 2-layers decompositions.
 - Former Adobe's Imaging Senior Engineer [Chris Cox](https://web.archive.org/web/20181204083457if_/https://forums.adobe.com/thread/792212) about the decision to use 15bit + 1.
-- As for why Linear Light Blend uses 256 as a white point, see [here](https://feedback.photoshop.com/conversations/photoshop/linear-light-8bit-math-off-by-1/6017e8a5b03192438cda1120)
+- As for why Linear Light Blend uses 256 as a white point, see [here](https://feedback.photoshop.com/conversations/photoshop/linear-light-8bit-math-off-by-1/6017e8a5b03192438cda1120).
 - Blend modes info are found everywhere but with various degree of precision. I've used  
-[Wikipedia](https://en.wikipedia.org/wiki/Blend_modes) of course, [PhotoBlogStop](https://photoblogstop.com/photoshop/photoshop-blend-modes-explained), but the most interesting have been [Murphy Chen](http://www.murphychen.com/Talks/talks.html) (Chinese language) and [Pegtop](http://www.pegtop.net/delphi/articles/blendmodes/hardlight.htm)
-- If you're curious, my 2009 original article can still be found [here](https://www.knowhowtransfer.com/notes-on-sharpening/)
+[Wikipedia](https://en.wikipedia.org/wiki/Blend_modes) of course, [PhotoBlogStop](https://photoblogstop.com/photoshop/photoshop-blend-modes-explained), but the most interesting have been [Murphy Chen](http://www.murphychen.com/Talks/talks.html) (Chinese language) and [Pegtop](http://www.pegtop.net/delphi/articles/blendmodes/hardlight.htm).
+- If you're curious, my 2009 original article can still be found [here](https://www.knowhowtransfer.com/notes-on-sharpening/).
 - All illustrations are mine. Blend mode graphs are plotted with p5.js, spreadsheets have been made with Apple's Number.
