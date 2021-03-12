@@ -1,4 +1,11 @@
-# Frequency Separation 2021
+# Frequency Separation 2021  
+
+---
+
+**DRAFT – not for sharing**  
+**Will be published in a short while at www.davidebarranca.com**
+
+---
 
 A long (long) time ago I wrote an essay on Frequency Separation, even if the main subject was disguised in the more approachable title "Notes on Sharpening". That was early 2009, way before Frequency Separation was cool, then popularized/mainstream, then possibly cool again.
 
@@ -491,7 +498,24 @@ The image can be recomposed: and the Detail layers used for retouching purposed 
 
 ![](img/EdgesPyramid3.jpg) 
 
-The Detail layers can be used for either retouching purposed or contrast enhancement: at this point it's up to you to decide which kernels to mix, and for which goal. Always remember to look for filters that affects the feature you're interested into – imagination can fly high!
+The Detail layers can be used for either retouching purposed or contrast enhancement.
+
+The general equations for the decomposition are:
+
+U0 = O  
+U1 = Filter1(O)  
+U2 = Filter2(O)  
+...  
+Un = FilterN(O)  
+
+D1 = U0 – U1  
+D2 = U1 – U2  
+...  
+Dn = Un-1 – Un
+
+O = Un + D1 + D2 + ... + Dn
+
+At this point it's up to you to decide which kernels to mix, and for which goal. Always remember to look for filters that affects the feature you're interested into – imagination can fly high!
 
 ![](img/ORIG.jpg) 
 
@@ -500,6 +524,7 @@ The Detail layers can be used for either retouching purposed or contrast enhance
 - Abbott Handerson Thayer, a portrait of his daughter from the [Smithsonian Institute collection](https://www.si.edu/object/angel%253Asaam_1929.6.112), 1887.
 - [The Ultimate Guide To The Frequency Separation Technique](https://fstoppers.com/post-production/ultimate-guide-frequency-separation-technique-8699) by Julia Kuzmenko McKim is a nice introductory guide to simple 2-layers decompositions.
 - Former Adobe's Imaging Senior Engineer [Chris Cox](https://web.archive.org/web/20181204083457if_/https://forums.adobe.com/thread/792212) about the decision to use 15bit + 1.
+- As for why Linear Light Blend uses 256 as a white point, see [here](https://feedback.photoshop.com/conversations/photoshop/linear-light-8bit-math-off-by-1/6017e8a5b03192438cda1120)
 - Blend modes info are found everywhere but with various degree of precision. I've used  
 [Wikipedia](https://en.wikipedia.org/wiki/Blend_modes) of course, [PhotoBlogStop](https://photoblogstop.com/photoshop/photoshop-blend-modes-explained), but the most interesting have been [Murphy Chen](http://www.murphychen.com/Talks/talks.html) (Chinese language) and [Pegtop](http://www.pegtop.net/delphi/articles/blendmodes/hardlight.htm)
 - If you're curious, my 2009 original article can still be found [here](https://www.knowhowtransfer.com/notes-on-sharpening/)
